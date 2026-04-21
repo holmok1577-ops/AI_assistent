@@ -1,0 +1,220 @@
+# Светлана — AI-персонаж с эмоциональным движком и режимом секретаря
+
+Чат-бот с персонажем Светланы — 34-летней девушки с эмоциональной моделью, системой отношений, долгосрочной памятью и режимом личного секретаря.
+
+## Особенности
+
+### Базовый функционал (чат-режим)
+- **Эмоциональный движок**: Светлана имеет свои эмоции (спокойствие, радость, романтичность, нервозность, усталость), которые меняются в зависимости от тона сообщений
+- **Система отношений**: Доверие, близость, симпатия и открытость развиваются по мере общения
+- **Долгосрочная память**: Эмбеддинги диалогов хранятся в PostgreSQL для поиска контекста
+- **User memory**: Важные факты о пользователе запоминаются отдельно
+- **Сюжетная линия**: Светлана генерирует свои истории и воспоминания
+- **Scoring**: Оценка качества ответов для самообучения
+
+### Режим секретаря
+- **Переключение режимов**: По кодовым фразам "давай поработаем" / "давай поболтаем"
+- **Запись встреч**: Естественный язык для создания встреч через диалог
+- **Telegram уведомления**: Автоматические напоминания о встречах
+- **Планировщик**: APScheduler проверяет встречи каждые 10 минут
+- **База данных встреч**: PostgreSQL для хранения встреч и напоминаний
+
+## Структура проекта
+
+```
+project/
+├── app/
+│   ├── main.py                    # FastAPI приложение
+│   ├── config.py                  # Конфигурация
+│   ├── db.py                      # SQLAlchemy настройки
+│   ├── models.py                  # Модели данных (UserMode, Meeting, Reminder)
+│   ├── memory.py                  # User memory
+│   ├── long_memory.py             # Long-term memory с эмбеддингами
+│   ├── thread_manager.py           # OpenAI Assistants API v2 управление
+│   ├── persona_manager.py         # Управление контекстом персоны
+│   ├── persona_instructions.py    # Инструкция для чат-режима
+│   ├── secretary_instructions.py   # Инструкция для режима секретаря
+│   ├── mode_manager.py            # Управление режимами
+│   ├── meeting_manager.py         # CRUD для встреч
+│   ├── meeting_extractor.py       # Извлечение встреч из ответа
+│   ├── telegram_bot.py            # Telegram уведомления
+│   ├── scheduler.py               # APScheduler для напоминаний
+│   ├── emotions.py                # Эмоциональный движок
+│   ├── relationship.py            # Система отношений
+│   ├── sentiment.py               # Анализ тона
+│   └── scoring.py                 # Оценка ответов
+├── persona/                       # Документы для векторного хранилища
+├── web/                           # Web UI
+├── docker-compose.yml
+├── Dockerfile
+├── requirements.txt
+├── .env.example
+└── .env                           # Не коммитить в Git!
+```
+
+## Установка и запуск
+
+### Локальный запуск
+
+1. Установите зависимости:
+```bash
+pip install -r requirements.txt
+```
+
+2. Создайте файл `.env` на основе `.env.example`:
+```bash
+cp .env.example .env
+```
+
+3. Заполните переменные в `.env`:
+```env
+DATABASE_URL=postgresql://user:password@localhost/dbname
+REDIS_URL=redis://localhost:6379
+OPENAI_API_KEY=sk-...
+TELEGRAM_BOT_TOKEN=ваш_токен_бота
+TELEGRAM_CHAT_ID=ваш_chat_id
+```
+
+4. Запустите PostgreSQL и Redis (или используйте docker-compose)
+
+5. Запустите приложение:
+```bash
+uvicorn app.main:app --reload
+```
+
+### Запуск через Docker
+
+1. Создайте файл `.env` с необходимыми переменными окружения
+
+2. Запустите:
+```bash
+docker-compose up --build -d
+```
+
+3. Для остановки:
+```bash
+docker-compose down
+```
+
+## Использование
+
+### Web UI
+Доступен по адресу: `http://localhost:8000/web/index.html`
+
+### API Endpoints
+
+**Чат:**
+```bash
+POST /chat
+Content-Type: application/json
+
+{
+  "user_id": "user123",
+  "message": "Привет, как дела?",
+  "history": []
+}
+```
+
+**Управление встречами:**
+```bash
+# Создать встречу
+POST /meetings
+{
+  "user_id": "user123",
+  "title": "Встреча с клиентом",
+  "datetime": "2026-04-23T14:00:00",
+  "location": "Офис",
+  "description": "Обсуждение проекта"
+}
+
+# Получить встречи пользователя
+GET /meetings/{user_id}
+
+# Удалить встречу
+DELETE /meetings/{meeting_id}
+```
+
+**Управление ассистентами:**
+```bash
+# Пересоздать ассистент (для применения новых инструкций)
+POST /recreate-assistant
+
+# Пересоздать ассистента секретаря
+POST /recreate-secretary
+```
+
+### Кодовые фразы для переключения режимов
+
+- **В режим секретаря**: "давай поработаем", "давай работать", "начнём работать"
+- **В режим чата**: "давай поболтаем", "давай общаться", "просто поболтаем"
+
+### Запись встреч через диалог
+
+В режиме секретаря можно записывать встречи естественным языком:
+```
+Пользователь: Запиши встречу с клиентом завтра в 15:00 в офисе
+Светлана: Хорошо, запишу встречу с клиентом на завтра в 15:00 в офисе.
+✅ Встреча записана в календарь!
+```
+
+## Деплой на сервер
+
+### Требования к серверу
+- Ubuntu 20.04+ или Debian 11+
+- Docker и Docker Compose
+- Минимум 2GB RAM
+- Минимум 10GB дискового пространства
+- Доступ к порту 80/443 (HTTP/HTTPS)
+
+### Шаги деплоя
+
+1. **Клонирование репозитория:**
+```bash
+git clone https://github.com/your-username/repo-name.git
+cd repo-name
+```
+
+2. **Настройка .env:**
+```bash
+cp .env.example .env
+nano .env
+# Заполните все переменные окружения
+```
+
+3. **Запуск через Docker Compose:**
+```bash
+docker-compose up --build -d
+```
+
+4. **Настройка Nginx (если нужно для домена):**
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+5. **Настройка SSL (Let's Encrypt):**
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+## Требования
+
+- Python 3.11+
+- PostgreSQL 13+
+- Redis 6+
+- OpenAI API Key
+- Telegram Bot Token (для уведомлений)
+- Docker и Docker Compose (для контейнеризации)
+
+## Лицензия
+
+MIT License

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Светлана</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="avatar">С</div>
+        <div class="header-info">
+            <div class="name">Светлана</div>
+            <div class="status">онлайн</div>
+        </div>
+        <button class="clear-btn" onclick="clearHistory()" title="Очистить историю">🗑️</button>
+    </div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="input-area">
+        <input type="text" id="msg" placeholder="Напишите сообщение..." autocomplete="off" />
+        <button id="send-btn" onclick="send()">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+        </button>
+    </div>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
