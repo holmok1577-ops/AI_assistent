@@ -158,48 +158,33 @@ def chat(req: ChatRequest):
                     meeting_created = created_meeting
                     logger.info(f"[Meeting] Встреча создана из ответа: {created_meeting['title']}")
                     
-                    # Проверяем, нужно ли отправить напоминание сразу
-                    from datetime import datetime, timedelta
-                    now = datetime.now()
-                    time_until = created_meeting['datetime'] - now
+                    # Получаем объект встречи из базы для datetime
+                    from app.db import SessionLocal
+                    from app.models import Meeting
+                    db = SessionLocal()
+                    meeting_obj = db.query(Meeting).filter_by(id=created_meeting['id']).first()
+                    db.close()
                     
                     # Отправляем уведомление о создании встречи (в try-except чтобы не прерывать логику)
                     try:
                         from app.telegram_bot import send_meeting_created
-                        datetime_str = created_meeting['datetime'].strftime("%Y-%m-%d %H:%M")
+                        datetime_str = meeting_obj.datetime.strftime("%Y-%m-%d %H:%M") if meeting_obj else meeting_data['datetime']
                         send_meeting_created(
                             created_meeting['title'],
                             datetime_str,
-                            created_meeting.get('location', '')
+                            meeting_obj.location if meeting_obj else meeting_data.get('location', '')
                         )
                         logger.info(f"[Meeting] Уведомление о создании отправлено")
                     except Exception as e:
                         logger.error(f"[Meeting] Ошибка отправки уведомления: {e}")
-                    
-                    # Если до встречи осталось менее 30 минут, отправляем напоминание сразу
-                    if time_until.total_seconds() > 0 and time_until.total_seconds() <= 1800:  # 30 минут
-                        logger.info(f"[Meeting] Встреча скоро ({time_until}), отправляем напоминание")
-                        try:
-                            # Сбрасываем флаг reminder_sent для этой встречи
-                            from app.db import SessionLocal
-                            from app.models import Meeting
-                            db = SessionLocal()
-                            meeting = db.query(Meeting).filter_by(id=created_meeting['id']).first()
-                            if meeting:
-                                meeting.reminder_sent = False
-                                db.commit()
-                            db.close()
-                            # Запускаем проверку напоминаний
-                            from app.scheduler import check_meeting_reminders
-                            check_meeting_reminders()
-                        except Exception as e:
-                            logger.error(f"[Meeting] Ошибка отправки напоминания: {e}")
                     
                     # Убираем блок [MEETING] из ответа для пользователя
                     reply = re.sub(r'\[MEETING\].*?\[/MEETING\]', '', reply, flags=re.DOTALL).strip()
                     reply += "\n\n✅ Встреча записана в календарь!"
                 except Exception as e:
                     logger.error(f"[Meeting] Ошибка создания встречи: {e}")
+                    import traceback
+                    logger.error(traceback.format_exc())
 
         # 9. Оценка ответа
         logger.info("Шаг 9: Оценка ответа...")

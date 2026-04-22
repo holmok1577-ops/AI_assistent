@@ -18,21 +18,26 @@ def extract_meeting_from_reply(reply: str) -> dict:
     # Извлекаем поля - используем более строгий паттерн чтобы не захватывать следующие поля
     meeting_data = {}
     
-    title_match = re.search(r'title:\s*([^\n]+)', content, re.IGNORECASE)
-    if title_match:
-        meeting_data['title'] = title_match.group(1).strip()
+    # Сначала разделяем по переносам строк
+    lines = content.split('\n')
     
-    datetime_match = re.search(r'datetime:\s*([^\n]+)', content, re.IGNORECASE)
-    if datetime_match:
-        meeting_data['datetime'] = datetime_match.group(1).strip()
-    
-    location_match = re.search(r'location:\s*([^\n]*)', content, re.IGNORECASE)
-    if location_match:
-        meeting_data['location'] = location_match.group(1).strip()
-    
-    description_match = re.search(r'description:\s*([^\n]*)', content, re.IGNORECASE)
-    if description_match:
-        meeting_data['description'] = description_match.group(1).strip()
+    for line in lines:
+        line = line.strip()
+        if ':' in line:
+            # Разделяем по первому двоеточию
+            parts = line.split(':', 1)
+            if len(parts) == 2:
+                key = parts[0].strip().lower()
+                value = parts[1].strip()
+                
+                if key == 'title' and value:
+                    meeting_data['title'] = value
+                elif key == 'datetime' and value:
+                    meeting_data['datetime'] = value
+                elif key == 'location':
+                    meeting_data['location'] = value
+                elif key == 'description':
+                    meeting_data['description'] = value
     
     # Проверяем обязательные поля
     if 'title' not in meeting_data or 'datetime' not in meeting_data:
