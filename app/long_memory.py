@@ -2,10 +2,10 @@ from openai import OpenAI
 from sqlalchemy.orm import Session
 from app.models import MemoryShard
 from app.db import SessionLocal
-from app.config import OPENAI_API_KEY
+from app.config import OPENAI_API_KEY, OPENAI_BASE_URL
 import numpy as np
 
-client = OpenAI(api_key=OPENAI_API_KEY, default_headers={"OpenAI-Beta": "assistants=v2"})
+client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL, default_headers={"OpenAI-Beta": "assistants=v2"})
 
 def embed(text: str):
     r = client.embeddings.create(

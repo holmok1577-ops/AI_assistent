@@ -1,5 +1,5 @@
 from openai import OpenAI
-from app.config import OPENAI_API_KEY
+from app.config import OPENAI_API_KEY, OPENAI_BASE_URL
 from app.db import SessionLocal
 from app.models import UserThread
 from app.persona_instructions import ASSISTANT_INSTRUCTIONS
@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 client = OpenAI(
     api_key=OPENAI_API_KEY,
+    base_url=OPENAI_BASE_URL,
     default_headers={"OpenAI-Beta": "assistants=v2"}
 )
 
