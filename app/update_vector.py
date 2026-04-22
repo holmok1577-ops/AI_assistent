@@ -1,11 +1,15 @@
 import os
 from openai import OpenAI
-from app.config import OPENAI_API_KEY, VECTOR_STORE_ID
+from app.config import PROXYAPI_KEY, PROXYAPI_BASE_URL, VECTOR_STORE_ID
 import logging
 
 logger = logging.getLogger(__name__)
 
-client = OpenAI(api_key=OPENAI_API_KEY, default_headers={"OpenAI-Beta": "assistants=v2"})
+client = OpenAI(
+    api_key=PROXYAPI_KEY,
+    base_url=PROXYAPI_BASE_URL,
+    default_headers={"OpenAI-Beta": "assistants=v2"}
+)
 
 def update_vector_store(vector_store_id: str = None):
     """Обновляет vector store файлами из папки persona"""

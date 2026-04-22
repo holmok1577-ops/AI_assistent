@@ -1,13 +1,17 @@
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from openai import OpenAI
+from app.config import PROXYAPI_KEY, PROXYAPI_BASE_URL
 from dotenv import load_dotenv
 from app.persona_instructions import ASSISTANT_INSTRUCTIONS
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), default_headers={"OpenAI-Beta": "assistants=v2"})
+client = OpenAI(
+    api_key=PROXYAPI_KEY,
+    base_url=PROXYAPI_BASE_URL,
+    default_headers={"OpenAI-Beta": "assistants=v2"}
+)
 
 print("=== Создание Vector Store ===")
 vector_store = client.beta.vector_stores.create(name="svetlana_persona")

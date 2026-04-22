@@ -1,7 +1,11 @@
 from openai import OpenAI
-from app.config import OPENAI_API_KEY
+from app.config import PROXYAPI_KEY, PROXYAPI_BASE_URL
 
-client = OpenAI(api_key=OPENAI_API_KEY, default_headers={"OpenAI-Beta": "assistants=v2"})
+client = OpenAI(
+    api_key=PROXYAPI_KEY,
+    base_url=PROXYAPI_BASE_URL,
+    default_headers={"OpenAI-Beta": "assistants=v2"}
+)
 
 def score_response(user_msg: str, assistant_msg: str):
     prompt = f"""
