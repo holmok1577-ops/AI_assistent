@@ -158,6 +158,37 @@ def chat(req: ChatRequest):
                     meeting_created = created_meeting
                     logger.info(f"[Meeting] Встреча создана из ответа: {created_meeting['title']}")
                     
+                    # Проверяем, нужно ли отправить напоминание сразу
+                    from datetime import datetime, timedelta
+                    now = datetime.now()
+                    time_until = created_meeting['datetime'] - now
+                    
+                    # Отправляем уведомление о создании встречи
+                    from app.telegram_bot import send_meeting_reminder
+                    datetime_str = created_meeting['datetime'].strftime("%Y-%m-%d %H:%M")
+                    send_meeting_reminder(
+                        created_meeting['title'],
+                        datetime_str,
+                        created_meeting.get('location', '')
+                    )
+                    logger.info(f"[Meeting] Уведомление о создании отправлено")
+                    
+                    # Если до встречи осталось менее 30 минут, отправляем напоминание сразу
+                    if time_until.total_seconds() > 0 and time_until.total_seconds() <= 1800:  # 30 минут
+                        logger.info(f"[Meeting] Встреча скоро ({time_until}), отправляем напоминание")
+                        # Сбрасываем флаг reminder_sent для этой встречи
+                        from app.db import SessionLocal
+                        from app.models import Meeting
+                        db = SessionLocal()
+                        meeting = db.query(Meeting).filter_by(id=created_meeting['id']).first()
+                        if meeting:
+                            meeting.reminder_sent = False
+                            db.commit()
+                        db.close()
+                        # Запускаем проверку напоминаний
+                        from app.scheduler import check_meeting_reminders
+                        check_meeting_reminders()
+                    
                     # Убираем блок [MEETING] из ответа для пользователя
                     reply = re.sub(r'\[MEETING\].*?\[/MEETING\]', '', reply, flags=re.DOTALL).strip()
                     reply += "\n\n✅ Встреча записана в календарь!"
