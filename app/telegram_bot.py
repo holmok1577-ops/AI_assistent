@@ -20,11 +20,15 @@ async def send_telegram_message(message: str, chat_id: str = None) -> bool:
     
     try:
         url = f"{TELEGRAM_PROXY}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        logger.info(f"[Telegram] Отправка на URL: {url}")
+        logger.info(f"[Telegram] Chat ID: {target_chat_id}")
         async with httpx.AsyncClient() as client:
             response = await client.post(url, json={
                 "chat_id": target_chat_id,
                 "text": message
             })
+            logger.info(f"[Telegram] Response status: {response.status_code}")
+            logger.info(f"[Telegram] Response body: {response.text}")
             response.raise_for_status()
             logger.info(f"[Telegram] Сообщение отправлено в {target_chat_id}: {message[:50]}...")
             return True
