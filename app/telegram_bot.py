@@ -20,7 +20,7 @@ async def send_telegram_message(message: str, chat_id: str = None) -> bool:
     
     try:
         url = f"{TELEGRAM_PROXY}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-        async with httpx.AsyncClient(proxies=TELEGRAM_PROXY) as client:
+        async with httpx.AsyncClient() as client:
             response = await client.post(url, json={
                 "chat_id": target_chat_id,
                 "text": message
