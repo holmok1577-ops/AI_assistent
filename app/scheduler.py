@@ -15,10 +15,10 @@ def check_meeting_reminders():
     db = SessionLocal()
     try:
         now = datetime.now()
-        # Встречи в ближайшие 24 часа, которым ещё не отправлено напоминание
+        # Встречи в ближайшие 30 минут, которым ещё не отправлено напоминание
         upcoming = db.query(Meeting).filter(
             Meeting.datetime >= now,
-            Meeting.datetime <= now + timedelta(hours=24),
+            Meeting.datetime <= now + timedelta(minutes=30),
             Meeting.reminder_sent == False
         ).all()
         
@@ -64,7 +64,7 @@ def start_scheduler():
     """Запускает планировщик"""
     scheduler.add_job(
         check_meeting_reminders,
-        trigger=IntervalTrigger(minutes=10),
+        trigger=IntervalTrigger(minutes=1),
         id='check_meetings',
         name='Check meeting reminders',
         replace_existing=True
