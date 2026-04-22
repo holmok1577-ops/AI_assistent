@@ -15,22 +15,22 @@ def extract_meeting_from_reply(reply: str) -> dict:
     
     content = match.group(1).strip()
     
-    # Извлекаем поля
+    # Извлекаем поля - используем более строгий паттерн чтобы не захватывать следующие поля
     meeting_data = {}
     
-    title_match = re.search(r'title:\s*(.+)', content, re.IGNORECASE)
+    title_match = re.search(r'title:\s*([^\n]+)', content, re.IGNORECASE)
     if title_match:
         meeting_data['title'] = title_match.group(1).strip()
     
-    datetime_match = re.search(r'datetime:\s*(.+)', content, re.IGNORECASE)
+    datetime_match = re.search(r'datetime:\s*([^\n]+)', content, re.IGNORECASE)
     if datetime_match:
         meeting_data['datetime'] = datetime_match.group(1).strip()
     
-    location_match = re.search(r'location:\s*(.+)', content, re.IGNORECASE)
+    location_match = re.search(r'location:\s*([^\n]*)', content, re.IGNORECASE)
     if location_match:
         meeting_data['location'] = location_match.group(1).strip()
     
-    description_match = re.search(r'description:\s*(.+)', content, re.IGNORECASE)
+    description_match = re.search(r'description:\s*([^\n]*)', content, re.IGNORECASE)
     if description_match:
         meeting_data['description'] = description_match.group(1).strip()
     
