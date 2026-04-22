@@ -15,23 +15,60 @@ def check_meeting_reminders():
     db = SessionLocal()
     try:
         now = datetime.now()
-        # Встречи в ближайшие 30 минут, которым ещё не отправлено напоминание
-        upcoming = db.query(Meeting).filter(
-            Meeting.datetime >= now,
-            Meeting.datetime <= now + timedelta(minutes=30),
-            Meeting.reminder_sent == False
+        
+        # Напоминание за 24 часа
+        upcoming_24h = db.query(Meeting).filter(
+            Meeting.datetime >= now + timedelta(hours=23, minutes=59),
+            Meeting.datetime <= now + timedelta(hours=24, minutes=1),
+            Meeting.reminder_24h_sent == False
         ).all()
         
-        for meeting in upcoming:
+        for meeting in upcoming_24h:
             try:
                 datetime_str = meeting.datetime.strftime("%Y-%m-%d %H:%M")
-                success = send_meeting_reminder(meeting.title, datetime_str, meeting.location)
+                success = send_meeting_reminder(f"⏰ Через 24 часа: {meeting.title}", datetime_str, meeting.location)
                 if success:
-                    meeting.reminder_sent = True
+                    meeting.reminder_24h_sent = True
                     db.commit()
-                    logger.info(f"[Scheduler] Напоминание отправлено для встречи {meeting.id}")
+                    logger.info(f"[Scheduler] Напоминание за 24ч отправлено для встречи {meeting.id}")
             except Exception as e:
-                logger.error(f"[Scheduler] Ошибка отправки напоминания: {e}")
+                logger.error(f"[Scheduler] Ошибка отправки напоминания за 24ч: {e}")
+        
+        # Напоминание за 30 минут
+        upcoming_30m = db.query(Meeting).filter(
+            Meeting.datetime >= now + timedelta(minutes=29),
+            Meeting.datetime <= now + timedelta(minutes=31),
+            Meeting.reminder_30m_sent == False
+        ).all()
+        
+        for meeting in upcoming_30m:
+            try:
+                datetime_str = meeting.datetime.strftime("%Y-%m-%d %H:%M")
+                success = send_meeting_reminder(f"⏰ Через 30 минут: {meeting.title}", datetime_str, meeting.location)
+                if success:
+                    meeting.reminder_30m_sent = True
+                    db.commit()
+                    logger.info(f"[Scheduler] Напоминание за 30мин отправлено для встречи {meeting.id}")
+            except Exception as e:
+                logger.error(f"[Scheduler] Ошибка отправки напоминания за 30мин: {e}")
+        
+        # Напоминание за 10 минут
+        upcoming_10m = db.query(Meeting).filter(
+            Meeting.datetime >= now + timedelta(minutes=9),
+            Meeting.datetime <= now + timedelta(minutes=11),
+            Meeting.reminder_10m_sent == False
+        ).all()
+        
+        for meeting in upcoming_10m:
+            try:
+                datetime_str = meeting.datetime.strftime("%Y-%m-%d %H:%M")
+                success = send_meeting_reminder(f"⏰ Через 10 минут: {meeting.title}", datetime_str, meeting.location)
+                if success:
+                    meeting.reminder_10m_sent = True
+                    db.commit()
+                    logger.info(f"[Scheduler] Напоминание за 10мин отправлено для встречи {meeting.id}")
+            except Exception as e:
+                logger.error(f"[Scheduler] Ошибка отправки напоминания за 10мин: {e}")
     finally:
         db.close()
 

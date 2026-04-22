@@ -72,7 +72,9 @@ class Meeting(Base):
     datetime = Column(DateTime)
     location = Column(String, nullable=True)
     description = Column(Text, nullable=True)
-    reminder_sent = Column(Boolean, default=False)
+    reminder_24h_sent = Column(Boolean, default=False)
+    reminder_30m_sent = Column(Boolean, default=False)
+    reminder_10m_sent = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
 
 class Reminder(Base):
