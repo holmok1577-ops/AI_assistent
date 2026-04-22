@@ -49,6 +49,19 @@ def send_meeting_reminder(title: str, datetime_str: str, location: str = "") -> 
         logger.error(f"[Telegram] Ошибка при отправке напоминания: {e}")
         return False
 
+def send_meeting_created(title: str, datetime_str: str, location: str = "") -> bool:
+    """Отправляет уведомление о создании встречи (НЕ ставит флаг reminder_sent)"""
+    import asyncio
+    
+    location_text = f"\n📍 Место: {location}" if location else ""
+    message = f"✅ Встреча создана!\n\n📅 {title}\n🕒 {datetime_str}{location_text}"
+    
+    try:
+        return asyncio.run(send_telegram_message(message))
+    except Exception as e:
+        logger.error(f"[Telegram] Ошибка при отправке уведомления о создании: {e}")
+        return False
+
 def send_reminder(text: str, datetime_str: str) -> bool:
     """Отправляет простое напоминание"""
     import asyncio
