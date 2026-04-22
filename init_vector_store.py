@@ -7,7 +7,7 @@ from app.persona_instructions import ASSISTANT_INSTRUCTIONS
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL", "http://95.81.79.57"), default_headers={"OpenAI-Beta": "assistants=v2"})
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=os.getenv("OPENAI_BASE_URL", "http://95.81.79.57/v1"), default_headers={"OpenAI-Beta": "assistants=v2"})
 
 print("=== Создание Vector Store ===")
 vector_store = client.beta.vector_stores.create(name="svetlana_persona")
