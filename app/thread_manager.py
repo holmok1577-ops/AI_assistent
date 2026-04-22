@@ -1,5 +1,5 @@
 from openai import OpenAI
-from app.config import PROXYAPI_KEY, PROXYAPI_BASE_URL
+from app.config import OPENAI_API_KEY
 from app.db import SessionLocal
 from app.models import UserThread
 from app.persona_instructions import ASSISTANT_INSTRUCTIONS
@@ -9,8 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 client = OpenAI(
-    api_key=PROXYAPI_KEY,
-    base_url=PROXYAPI_BASE_URL,
+    api_key=OPENAI_API_KEY,
     default_headers={"OpenAI-Beta": "assistants=v2"}
 )
 
