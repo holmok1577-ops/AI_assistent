@@ -1,14 +1,15 @@
 import logging
-from telegram import Bot
+import httpx
 from app.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 
 logger = logging.getLogger(__name__)
 
-bot = Bot(token=TELEGRAM_BOT_TOKEN) if TELEGRAM_BOT_TOKEN else None
+# Прокси для Telegram
+TELEGRAM_PROXY = "http://95.81.79.57"
 
 async def send_telegram_message(message: str, chat_id: str = None) -> bool:
-    """Отправляет сообщение в Telegram"""
-    if not bot:
+    """Отправляет сообщение в Telegram через прокси"""
+    if not TELEGRAM_BOT_TOKEN:
         logger.warning("[Telegram] Бот не инициализирован (нет токена)")
         return False
     
@@ -18,9 +19,15 @@ async def send_telegram_message(message: str, chat_id: str = None) -> bool:
         return False
     
     try:
-        await bot.send_message(chat_id=target_chat_id, text=message)
-        logger.info(f"[Telegram] Сообщение отправлено в {target_chat_id}: {message[:50]}...")
-        return True
+        url = f"{TELEGRAM_PROXY}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        async with httpx.AsyncClient(proxies=TELEGRAM_PROXY) as client:
+            response = await client.post(url, json={
+                "chat_id": target_chat_id,
+                "text": message
+            })
+            response.raise_for_status()
+            logger.info(f"[Telegram] Сообщение отправлено в {target_chat_id}: {message[:50]}...")
+            return True
     except Exception as e:
         logger.error(f"[Telegram] Ошибка отправки сообщения: {e}")
         return False
