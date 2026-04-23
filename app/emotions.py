@@ -1,6 +1,9 @@
+import logging
 from app.db import SessionLocal
 from app.models import EmotionalState
 from app.sentiment import detect_tone
+
+logger = logging.getLogger(__name__)
 
 def adjust_emotions(user_id: str, message: str):
     db = SessionLocal()
