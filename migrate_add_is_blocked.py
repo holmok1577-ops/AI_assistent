@@ -2,7 +2,7 @@
 Миграция для добавления полей is_blocked и first_extreme_response в таблицу emotional_state
 """
 from app.db import SessionLocal, engine
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -13,7 +13,7 @@ def migrate():
     db = SessionLocal()
     try:
         # Проверяем, существуют ли колонки
-        inspector = engine.dialect.get_inspector(engine)
+        inspector = inspect(engine)
         columns = [col['name'] for col in inspector.get_columns('emotional_state')]
         
         # Добавляем is_blocked если нет
