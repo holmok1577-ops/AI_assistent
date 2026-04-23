@@ -14,6 +14,9 @@ def detect_tone(text: str):
     profanity_keywords = ['бля', 'блять', 'хуй', 'пизда', 'ебать', 'ебаный', 'пидор', 'сука', 'нахер', 'нахрен', 'блядь']
     if any(keyword in text_lower for keyword in profanity_keywords):
         result = "profane"
+    # Проверка на извинения по ключевым словам
+    elif any(keyword in text_lower for keyword in ['прости', 'прошу прощения', 'извини', 'простите', 'не хотел обидеть', 'не хотела обидеть', 'виноват', 'виновата', 'сорян', 'извеняюсь', 'извиняюсь']):
+        result = "apologetic"
     # Проверка на флирт по ключевым словам
     elif any(keyword in text_lower for keyword in ['люблю', 'нравишься', 'красивая', 'милая', 'обнимаю', 'целую', 'соскучился', 'хочу тебя']):
         result = "flirty"

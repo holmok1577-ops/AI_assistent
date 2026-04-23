@@ -86,6 +86,32 @@ def chat(req: ChatRequest):
         rel_dict = update_relationship(req.user_id, req.message)
         logger.info(f"Отношения обновлены: trust={rel_dict['trust']}, closeness={rel_dict['closeness']}")
 
+        # 2.1. Проверка на блокировку
+        logger.info("Шаг 2.1: Проверка блокировки...")
+        from app.db import SessionLocal
+        from app.models import EmotionalState
+        db = SessionLocal()
+        emo_check = db.query(EmotionalState).filter_by(user_id=req.user_id).first()
+        is_blocked = emo_check.is_blocked if emo_check else False
+        first_extreme = emo_check.first_extreme_response if emo_check else False
+        db.close()
+        logger.info(f"Статус блокировки: {is_blocked}, Первый грубый ответ: {first_extreme}")
+
+        # Если заблокирован - не отвечаем
+        if is_blocked:
+            logger.info("=== Пользователь заблокирован, ответ не генерируется ===")
+            return {
+                "reply": "",  # Пустой ответ
+                "is_blocked": True,
+                "status": "offline",
+                "emotion": emo_dict,
+                "relationship": rel_dict,
+                "mode": current_mode
+            }
+
+        # Если это первый грубый ответ - меняем статус на offline после ответа
+        should_go_offline = first_extreme and not is_blocked
+
         # 2.5. Управление состоянием диалога
         logger.info("Шаг 2.5: Управление состоянием диалога...")
         conv_state = get_conversation_state(req.user_id)
@@ -216,7 +242,9 @@ def chat(req: ChatRequest):
             "relationship": rel_dict,
             "story": story,
             "mode": current_mode,
-            "meeting_created": meeting_created
+            "meeting_created": meeting_created,
+            "is_blocked": False,
+            "status": "offline" if should_go_offline else "online"
         }
     except Exception as e:
         logger.error(f"!!! ОШИБКА в обработке запроса: {str(e)}")

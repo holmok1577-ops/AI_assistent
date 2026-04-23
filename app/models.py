@@ -25,6 +25,8 @@ class EmotionalState(Base):
     romantic = Column(Float, default=20)
     nervous = Column(Float, default=10)
     tired = Column(Float, default=20)
+    is_blocked = Column(Boolean, default=False)  # Блокировка ответов при крайних эмоциях
+    first_extreme_response = Column(Boolean, default=False)  # Флаг первого грубого ответа перед блокировкой
 
 class RelationshipState(Base):
     __tablename__ = "relationship_state"

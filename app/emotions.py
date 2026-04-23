@@ -25,9 +25,9 @@ def adjust_emotions(user_id: str, message: str):
         emo.joy -= 10
 
     elif tone == "profane":
-        emo.calm -= 10
-        emo.nervous += 15
-        emo.joy -= 5
+        emo.calm -= 25  # Усилено с 10 до 25
+        emo.nervous += 30  # Усилено с 15 до 30
+        emo.joy -= 15  # Усилено с 5 до 15
 
     elif tone == "flirty":
         emo.romantic += 15
@@ -38,10 +38,34 @@ def adjust_emotions(user_id: str, message: str):
         emo.joy -= 10
         emo.calm -= 4
 
+    elif tone == "apologetic":
+        emo.calm += 20  # Быстрое восстановление спокойствия
+        emo.nervous -= 25  # Быстрое снижение нервозности
+        emo.joy += 5
+
     # soft clamping
     for field in ["calm", "joy", "romantic", "nervous", "tired"]:
         v = getattr(emo, field)
         setattr(emo, field, max(0, min(100, v)))
+
+    # Проверка на блокировку (симпатия 0, нервозность 100, спокойствие 0)
+    from app.relationship import get_relationship_values
+    rel = get_relationship_values(user_id)
+    if rel['sympathy'] <= 0 and emo.nervous >= 100 and emo.calm <= 0:
+        # Если это первый раз - ставим флаг для грубого ответа
+        if not emo.first_extreme_response:
+            emo.first_extreme_response = True
+            logger.info(f"[EXTREME] Первый раз в крайней ярости - будет грубый ответ")
+        else:
+            # После первого грубого ответа - блокируем
+            emo.is_blocked = True
+            logger.info(f"[BLOCK] Пользователь {user_id} заблокирован (крайняя ярость)")
+    # Проверка на разблокировку (симпатия > 10, нервозность < 90, спокойствие > 10)
+    elif rel['sympathy'] > 10 and emo.nervous < 90 and emo.calm > 10:
+        if emo.is_blocked:
+            emo.is_blocked = False
+            emo.first_extreme_response = False  # Сбрасываем флаг
+            logger.info(f"[UNBLOCK] Пользователь {user_id} разблокирован")
 
     db.commit()
 
@@ -51,7 +75,8 @@ def adjust_emotions(user_id: str, message: str):
         "joy": emo.joy,
         "romantic": emo.romantic,
         "nervous": emo.nervous,
-        "tired": emo.tired
+        "tired": emo.tired,
+        "is_blocked": emo.is_blocked
     }
 
     db.close()

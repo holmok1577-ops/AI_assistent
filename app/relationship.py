@@ -37,6 +37,11 @@ def update_relationship(user_id: str, message: str):
         rel.trust += 3
         rel.sympathy += 2
 
+    elif tone == "apologetic":
+        rel.sympathy += 15  # Быстрое восстановление симпатии
+        rel.trust += 10
+        rel.closeness += 5
+
     # clamp values
     for field in ["trust", "closeness", "sympathy", "openness"]:
         v = getattr(rel, field)
@@ -52,5 +57,28 @@ def update_relationship(user_id: str, message: str):
         "openness": rel.openness
     }
 
+    db.close()
+    return result
+
+def get_relationship_values(user_id: str) -> dict:
+    """Получает текущие значения отношений без изменений"""
+    db = SessionLocal()
+    rel = db.query(RelationshipState).filter_by(user_id=user_id).first()
+    
+    if not rel:
+        db.close()
+        return {
+            "trust": 20,
+            "closeness": 10,
+            "sympathy": 40,
+            "openness": 5
+        }
+    
+    result = {
+        "trust": rel.trust,
+        "closeness": rel.closeness,
+        "sympathy": rel.sympathy,
+        "openness": rel.openness
+    }
     db.close()
     return result

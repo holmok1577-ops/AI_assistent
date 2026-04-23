@@ -124,8 +124,19 @@ async function send() {
         // Убираем индикатор печати
         hideTyping();
         
-        // Добавляем ответ ИИ
-        addMessage('ai', data.reply);
+        // Обновляем статус
+        if (data.status) {
+            updateStatus(data.status === 'online' ? 'онлайн' : 'не в сети');
+        }
+        
+        // Если заблокирован - не добавляем сообщение
+        if (data.is_blocked) {
+            // Можно показать системное сообщение о блокировке
+            addMessage('ai', 'Светлана не хочет с тобой говорить...');
+        } else if (data.reply) {
+            // Добавляем ответ ИИ
+            addMessage('ai', data.reply);
+        }
     } catch (error) {
         hideTyping();
         console.error('Error:', error);
@@ -161,6 +172,14 @@ function resetUserId() {
         localStorage.removeItem('chatHistory');
         messagesContainer.innerHTML = '';
         location.reload();
+    }
+}
+
+// Обновление статуса
+function updateStatus(status) {
+    const statusElement = document.querySelector('.status');
+    if (statusElement) {
+        statusElement.textContent = status;
     }
 }
 
