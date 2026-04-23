@@ -46,6 +46,11 @@ def adjust_emotions(user_id: str, message: str):
         emo.nervous -= 25  # Быстрое снижение нервозности
         emo.joy += 5
 
+    elif tone == "robot_question":
+        emo.calm -= 2  # Небольшое снижение спокойствия
+        emo.nervous += 3  # Небольшое повышение нервозности
+        emo.joy -= 2
+
     # soft clamping
     for field in ["calm", "joy", "romantic", "nervous", "tired"]:
         v = getattr(emo, field)

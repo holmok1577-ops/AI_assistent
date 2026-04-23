@@ -18,8 +18,8 @@ def get_persona_state(emotions: dict, relationships: dict) -> str:
     if sympathy <= 30:
         instructions.append(load_state_file('low_sympathy.txt'))
     
-    # Проверка высокого гнева/нервозности
-    if nervous >= 70:
+    # Проверка высокой нервозности
+    if nervous >= 50:
         instructions.append(load_state_file('high_anger.txt'))
     
     # Проверка низкого спокойствия

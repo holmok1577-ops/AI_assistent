@@ -42,6 +42,10 @@ def update_relationship(user_id: str, message: str):
         rel.trust += 10
         rel.closeness += 5
 
+    elif tone == "robot_question":
+        rel.sympathy -= 2  # Небольшое снижение симпатии
+        rel.trust -= 1
+
     # clamp values
     for field in ["trust", "closeness", "sympathy", "openness"]:
         v = getattr(rel, field)
