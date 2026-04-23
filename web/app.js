@@ -2,6 +2,16 @@ const messagesContainer = document.getElementById('messages');
 const msgInput = document.getElementById('msg');
 const sendBtn = document.getElementById('send-btn');
 
+// Получить или создать уникальный user_id
+function getUserId() {
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+        userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('userId', userId);
+    }
+    return userId;
+}
+
 // Загрузка истории из localStorage
 function loadHistory() {
     const history = JSON.parse(localStorage.getItem('chatHistory') || '[]');
@@ -103,7 +113,7 @@ async function send() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                user_id: 'user123',
+                user_id: getUserId(),
                 message: text,
                 history: getHistoryForBackend()
             })
@@ -141,6 +151,16 @@ function clearHistory() {
     if (confirm('Очистить историю диалога?')) {
         localStorage.removeItem('chatHistory');
         messagesContainer.innerHTML = '';
+    }
+}
+
+// Сброс user_id (для тестирования)
+function resetUserId() {
+    if (confirm('Сбросить ID пользователя и начать с нуля?')) {
+        localStorage.removeItem('userId');
+        localStorage.removeItem('chatHistory');
+        messagesContainer.innerHTML = '';
+        location.reload();
     }
 }
 
