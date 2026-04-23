@@ -32,7 +32,7 @@ class RelationshipState(Base):
     user_id = Column(String, primary_key=True)
     trust = Column(Float, default=20)
     closeness = Column(Float, default=10)
-    sympathy = Column(Float, default=15)
+    sympathy = Column(Float, default=40)  # Увеличено с 15 до 40 для более приветливого общения
     openness = Column(Float, default=5)
 
 class SvetlanaStory(Base):
