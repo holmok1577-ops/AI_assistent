@@ -94,11 +94,11 @@ def chat(req: ChatRequest):
         emo_check = db.query(EmotionalState).filter_by(user_id=req.user_id).first()
         is_blocked = emo_check.is_blocked if emo_check else False
         first_extreme = emo_check.first_extreme_response if emo_check else False
-        db.close()
         logger.info(f"Статус блокировки: {is_blocked}, Первый грубый ответ: {first_extreme}")
 
         # Если заблокирован - не отвечаем
         if is_blocked:
+            db.close()
             logger.info("=== Пользователь заблокирован, ответ не генерируется ===")
             return {
                 "reply": "",  # Пустой ответ
@@ -111,6 +111,14 @@ def chat(req: ChatRequest):
 
         # Если это первый грубый ответ - меняем статус на offline после ответа
         should_go_offline = first_extreme and not is_blocked
+        
+        # Если параметры восстановились (не extreme) - сбрасываем флаг
+        if not first_extreme and emo_check and emo_check.first_extreme_response:
+            emo_check.first_extreme_response = False
+            db.commit()
+            logger.info(f"[STATUS] Параметры восстановлены, статус online")
+        
+        db.close()
 
         # 2.5. Управление состоянием диалога
         logger.info("Шаг 2.5: Управление состоянием диалога...")
