@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Миграция для добавления таблицы conversation_state
 """
