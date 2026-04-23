@@ -63,6 +63,16 @@ class UserMode(Base):
     mode = Column(String, default="chat")  # "chat" или "secretary"
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
+class ConversationState(Base):
+    __tablename__ = "conversation_state"
+
+    user_id = Column(String, primary_key=True)
+    message_count = Column(Integer, default=0)  # Количество сообщений в текущем диалоге
+    current_topic = Column(String, default="")  # Текущая тема разговора
+    topic_changes = Column(Integer, default=0)  # Сколько раз менялась тема
+    last_topic_change = Column(DateTime, nullable=True)  # Когда последний раз менялась тема
+    introduced = Column(Boolean, default=False)  # Произошло ли знакомство
+
 class Meeting(Base):
     __tablename__ = "meetings"
 

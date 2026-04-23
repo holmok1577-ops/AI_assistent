@@ -26,6 +26,7 @@ from app.persona_manager import inject_persona_context
 from app.emotions import adjust_emotions
 from app.relationship import update_relationship
 from app.story_engine import generate_story_event, save_story, get_story_context
+from app.conversation_manager import get_conversation_state, increment_message_count, mark_introduced, should_change_topic
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -85,6 +86,17 @@ def chat(req: ChatRequest):
         rel_dict = update_relationship(req.user_id, req.message)
         logger.info(f"Отношения обновлены: trust={rel_dict['trust']}, closeness={rel_dict['closeness']}")
 
+        # 2.5. Управление состоянием диалога
+        logger.info("Шаг 2.5: Управление состоянием диалога...")
+        conv_state = get_conversation_state(req.user_id)
+        message_count = increment_message_count(req.user_id)
+        logger.info(f"Счётчик сообщений: {message_count}, Знакомство: {conv_state.introduced}")
+        
+        # Если это первые сообщения и ещё не познакомились - отмечаем знакомство
+        if message_count <= 3 and not conv_state.introduced:
+            mark_introduced(req.user_id)
+            logger.info("Знакомство отмечено")
+
         # 3. Сгенерировать историю Светланы (редко, только иногда)
         import random
         story = None
@@ -132,7 +144,9 @@ def chat(req: ChatRequest):
             relationships=rel_dict,
             stories=stories,
             history=history_context,
-            mode=current_mode
+            mode=current_mode,
+            message_count=message_count,
+            introduced=conv_state.introduced
         )
 
         # 8. Генерация ответа через Thread API

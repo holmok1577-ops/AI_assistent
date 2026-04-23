@@ -1,6 +1,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.db import SessionLocal
 from app.models import Meeting, Reminder
 from app.telegram_bot import send_meeting_reminder, send_reminder
@@ -10,11 +10,15 @@ logger = logging.getLogger(__name__)
 
 scheduler = BackgroundScheduler()
 
+def get_moscow_time():
+    """Возвращает текущее время в часовом поясе Москвы (UTC+3)"""
+    return datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=3)
+
 def check_meeting_reminders():
     """Проверяет и отправляет напоминания о встречах"""
     db = SessionLocal()
     try:
-        now = datetime.now()
+        now = get_moscow_time()
         
         # Напоминание за 24 часа
         upcoming_24h = db.query(Meeting).filter(
@@ -76,7 +80,7 @@ def check_reminders():
     """Проверяет и отправляет простые напоминания"""
     db = SessionLocal()
     try:
-        now = datetime.now()
+        now = get_moscow_time()
         # Напоминания в ближайшие 24 часа, которым ещё не отправлено
         upcoming = db.query(Reminder).filter(
             Reminder.datetime >= now,
