@@ -24,6 +24,11 @@ def adjust_emotions(user_id: str, message: str):
         emo.nervous += 20
         emo.joy -= 10
 
+    elif tone == "profane":
+        emo.calm -= 10
+        emo.nervous += 15
+        emo.joy -= 5
+
     elif tone == "flirty":
         emo.romantic += 15
         emo.joy += 7

@@ -28,6 +28,11 @@ def update_relationship(user_id: str, message: str):
         rel.trust -= 8
         rel.closeness -= 6
 
+    elif tone == "profane":
+        rel.sympathy -= 15
+        rel.trust -= 5
+        rel.closeness -= 3
+
     elif tone == "sad":
         rel.trust += 3
         rel.sympathy += 2

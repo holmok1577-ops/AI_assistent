@@ -10,9 +10,12 @@ def detect_tone(text: str):
     score = analyzer.polarity_scores(text)["compound"]
     text_lower = text.lower()
 
+    # Проверка на мат по ключевым словам
+    profanity_keywords = ['бля', 'блять', 'хуй', 'пизда', 'ебать', 'ебаный', 'пидор', 'сука', 'нахер', 'нахрен', 'блядь']
+    if any(keyword in text_lower for keyword in profanity_keywords):
+        result = "profane"
     # Проверка на флирт по ключевым словам
-    flirty_keywords = ['люблю', 'нравишься', 'красивая', 'милая', 'обнимаю', 'целую', 'соскучился', 'хочу тебя']
-    if any(keyword in text_lower for keyword in flirty_keywords):
+    elif any(keyword in text_lower for keyword in ['люблю', 'нравишься', 'красивая', 'милая', 'обнимаю', 'целую', 'соскучился', 'хочу тебя']):
         result = "flirty"
     # Проверка на грусть по ключевым словам
     elif any(word in text_lower for word in ['грустно', 'плохо', 'устал', 'печаль', 'горе']):
