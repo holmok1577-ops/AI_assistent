@@ -44,7 +44,7 @@ def inject_persona_context(tone, memories, facts, emotions, relationships, stori
     # Получаем инструкции на основе текущего эмоционального состояния
     persona_state_instruction = ""
     if mode == "chat":
-        persona_state_instruction = get_persona_state(emotions, relationships)
+        persona_state_instruction = get_persona_state(emotions, relationships, tone)
         if persona_state_instruction:
             persona_state_instruction = f"\n📌 ТВОЁ ТЕКУЩЕЕ ЭМОЦИОНАЛЬНОЕ СОСТОЯНИЕ:\n{persona_state_instruction}"
     

@@ -1,11 +1,15 @@
 import os
 
-def get_persona_state(emotions: dict, relationships: dict) -> str:
+def get_persona_state(emotions: dict, relationships: dict, tone: str = None) -> str:
     """
     Определяет текущее состояние персоны на основе эмоций и отношений
     и возвращает соответствующие инструкции.
     """
     instructions = []
+
+    # Прямая реакция на мат (независимо от параметров)
+    if tone == "profane":
+        instructions.append(load_state_file('profanity_reaction.txt'))
     
     # Проверка крайней ярости (симпатия < 1, нервозность > 99, спокойствие < 1)
     sympathy = relationships.get('sympathy', 50)
