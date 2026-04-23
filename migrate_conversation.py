@@ -15,7 +15,7 @@ def migrate():
         ConversationState.__table__.create(engine, checkfirst=True)
         logger.info("Таблица conversation_state успешно создана")
     except Exception as e:
-        logger.error(f"Ошибка при создании таблицы: {e}")
+        logger.error("Ошибка при создании таблицы: {}".format(e))
         raise
 
 if __name__ == "__main__":
