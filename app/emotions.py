@@ -51,10 +51,10 @@ def adjust_emotions(user_id: str, message: str):
         v = getattr(emo, field)
         setattr(emo, field, max(0, min(100, v)))
 
-    # Проверка на блокировку (симпатия 0, нервозность 100, спокойствие 0)
+    # Проверка на блокировку (симпатия < 1, нервозность > 99, спокойствие < 1)
     from app.relationship import get_relationship_values
     rel = get_relationship_values(user_id)
-    if rel['sympathy'] <= 0 and emo.nervous >= 100 and emo.calm <= 0:
+    if rel['sympathy'] < 1 and emo.nervous > 99 and emo.calm < 1:
         # Если это первый раз - ставим флаг для грубого ответа
         if not emo.first_extreme_response:
             emo.first_extreme_response = True
