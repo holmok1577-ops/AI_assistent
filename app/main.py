@@ -289,3 +289,47 @@ def recreate_secretary():
     assistant_id = get_or_create_assistant(mode="secretary", force_recreate=True)
     return {"status": "success", "assistant_id": assistant_id}
 
+@app.get("/stats/{user_id}")
+def get_user_stats(user_id: str):
+    """Возвращает статистику пользователя: эмоции, отношения, состояние диалога"""
+    logger.info("=== Получение статистики для {} ===".format(user_id))
+    from app.db import SessionLocal
+    from app.models import EmotionalState, RelationshipState, ConversationState
+    
+    db = SessionLocal()
+    try:
+        # Эмоции
+        emo = db.query(EmotionalState).filter_by(user_id=user_id).first()
+        emotions = {
+            "calm": emo.calm if emo else 70,
+            "joy": emo.joy if emo else 50,
+            "romantic": emo.romantic if emo else 20,
+            "nervous": emo.nervous if emo else 10,
+            "tired": emo.tired if emo else 20
+        }
+        
+        # Отношения
+        rel = db.query(RelationshipState).filter_by(user_id=user_id).first()
+        relationships = {
+            "trust": rel.trust if rel else 20,
+            "closeness": rel.closeness if rel else 10,
+            "sympathy": rel.sympathy if rel else 15,
+            "openness": rel.openness if rel else 5
+        }
+        
+        # Состояние диалога
+        conv = db.query(ConversationState).filter_by(user_id=user_id).first()
+        conversation = {
+            "message_count": conv.message_count if conv else 0,
+            "introduced": conv.introduced if conv else False,
+            "current_topic": conv.current_topic if conv else ""
+        }
+        
+        return {
+            "emotions": emotions,
+            "relationships": relationships,
+            "conversation": conversation
+        }
+    finally:
+        db.close()
+
