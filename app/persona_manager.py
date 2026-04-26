@@ -2,7 +2,21 @@ from app.persona_instructions import ASSISTANT_INSTRUCTIONS
 from app.secretary_instructions import SECRETARY_INSTRUCTIONS
 from app.persona_states import get_persona_state
 
-def inject_persona_context(tone, memories, facts, emotions, relationships, stories, history="", mode="chat", message_count=0, introduced=False):
+def inject_persona_context(
+    tone,
+    memories,
+    facts,
+    emotions,
+    relationships,
+    stories,
+    history="",
+    mode="chat",
+    message_count=0,
+    introduced=False,
+    dialogue_guidance="",
+    affect_guidance="",
+    affect_profile=None,
+):
     # Выбор инструкции в зависимости от режима
     if mode == "secretary":
         base_instruction = SECRETARY_INSTRUCTIONS
@@ -44,13 +58,15 @@ def inject_persona_context(tone, memories, facts, emotions, relationships, stori
     # Получаем инструкции на основе текущего эмоционального состояния
     persona_state_instruction = ""
     if mode == "chat":
-        persona_state_instruction = get_persona_state(emotions, relationships, tone)
+        persona_state_instruction = get_persona_state(emotions, relationships, tone, affect_profile=affect_profile)
         if persona_state_instruction:
             persona_state_instruction = f"\n📌 ТВОЁ ТЕКУЩЕЕ ЭМОЦИОНАЛЬНОЕ СОСТОЯНИЕ:\n{persona_state_instruction}"
     
     return f"""{base_instruction}
 {mode_instruction}
 {persona_state_instruction}
+{dialogue_guidance}
+{affect_guidance}
 
 {memory_context}
 {facts_context}
@@ -68,4 +84,6 @@ def inject_persona_context(tone, memories, facts, emotions, relationships, stori
 - Если уже здоровались в истории — не здоровайся снова
 - Учитывай контекст разговора
 - Если пользователь спрашивает о тебе — отвечай конкретно, используя детали из биографии
+- Следи за родом: о себе только в женском, пользователя не гендерь без явного сигнала
+- Не превращай разговор в интервью
 """

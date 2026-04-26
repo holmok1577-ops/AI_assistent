@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import logging
 import re
 from app.db import Base, engine
@@ -26,7 +26,10 @@ from app.persona_manager import inject_persona_context
 from app.emotions import adjust_emotions
 from app.relationship import update_relationship
 from app.story_engine import generate_story_event, save_story, get_story_context
-from app.conversation_manager import get_conversation_state, increment_message_count, mark_introduced, should_change_topic
+from app.conversation_manager import get_conversation_state, increment_message_count, mark_introduced, update_topic_state
+from app.dialogue_policy import build_dialogue_guidance
+from app.response_guard import refine_reply
+from app.affect_memory import build_affect_guidance, record_and_get_affect_profile
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -56,7 +59,7 @@ async def read_root():
 class ChatRequest(BaseModel):
     user_id: str
     message: str
-    history: list = []  # История последних сообщений
+    history: list = Field(default_factory=list)  # История последних сообщений
 
 @app.post("/chat")
 def chat(req: ChatRequest):
@@ -76,14 +79,27 @@ def chat(req: ChatRequest):
                 "mode": current_mode,
                 "mode_switched": True
             }
+        # 0.5 Определение тона и накопленного эмоционального фона
+        logger.info("Шаг 0.5: Определение тона и эмоционального фона...")
+        tone = detect_tone(req.message)
+        affect_profile = record_and_get_affect_profile(req.user_id, tone, req.message)
+        affect_guidance = build_affect_guidance(affect_profile)
+        logger.info(
+            "Тон=%s hostile_recent=%s positive_recent=%s playful_recent=%s",
+            tone,
+            affect_profile.get("hostile_recent", 0),
+            affect_profile.get("positive_recent", 0),
+            affect_profile.get("playful_recent", 0),
+        )
+
         # 1. Обработать эмоции
         logger.info("Шаг 1: Обработка эмоций...")
-        emo_dict = adjust_emotions(req.user_id, req.message)
+        emo_dict = adjust_emotions(req.user_id, req.message, tone=tone, affect_profile=affect_profile)
         logger.info(f"Эмоции получены: calm={emo_dict['calm']}, joy={emo_dict['joy']}")
 
         # 2. Обновить отношения
         logger.info("Шаг 2: Обновление отношений...")
-        rel_dict = update_relationship(req.user_id, req.message)
+        rel_dict = update_relationship(req.user_id, req.message, tone=tone, affect_profile=affect_profile)
         logger.info(f"Отношения обновлены: trust={rel_dict['trust']}, closeness={rel_dict['closeness']}")
 
         # 2.1. Проверка на блокировку
@@ -154,10 +170,20 @@ def chat(req: ChatRequest):
         facts = get_user_facts(req.user_id)
         logger.info(f"Найдено {len(memory_hits)} воспоминаний, {len(facts)} фактов")
 
-        # 6. Определение тона
-        logger.info("Шаг 6: Определение тона...")
-        tone = detect_tone(req.message)
-        logger.info(f"Тон: {tone}")
+        logger.info("Шаг 6: Анализ динамики диалога...")
+        dialogue_plan = build_dialogue_guidance(
+            user_message=req.message,
+            history=req.history,
+            message_count=message_count,
+            introduced=conv_state.introduced
+        )
+        update_topic_state(req.user_id, dialogue_plan["current_topic"])
+        logger.info(
+            "План диалога: topic=%s depth=%s change_topic=%s",
+            dialogue_plan["current_topic"],
+            dialogue_plan["user_depth"],
+            dialogue_plan["should_change_topic"]
+        )
 
         # 7. Формирование контекста с историей сообщений
         logger.info("Шаг 7: Формирование контекста...")
@@ -180,13 +206,17 @@ def chat(req: ChatRequest):
             history=history_context,
             mode=current_mode,
             message_count=message_count,
-            introduced=conv_state.introduced
+            introduced=conv_state.introduced,
+            dialogue_guidance=dialogue_plan["guidance_text"],
+            affect_guidance=affect_guidance,
+            affect_profile=affect_profile
         )
 
         # 8. Генерация ответа через Thread API
         logger.info("Шаг 8: Генерация ответа через Thread API...")
         thread_id = get_or_create_thread(req.user_id)
         reply = run_assistant_with_thread(req.message, system_context, thread_id, mode=current_mode)
+        reply = refine_reply(reply, req.message, req.history, mode=current_mode)
         logger.info(f"Ответ получен: {reply[:100]}...")
 
         # 8.5. Проверка на создание встречи (только в режиме секретаря)

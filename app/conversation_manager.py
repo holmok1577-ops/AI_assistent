@@ -77,6 +77,24 @@ def should_change_topic(user_id: str, current_topic: str) -> bool:
     finally:
         db.close()
 
+
+def update_topic_state(user_id: str, current_topic: str):
+    """Обновляет текущую тему разговора для статистики и мягкого контроля диалога."""
+    db = SessionLocal()
+    try:
+        state = db.query(ConversationState).filter_by(user_id=user_id).first()
+        if not state:
+            state = ConversationState(user_id=user_id)
+            db.add(state)
+
+        if state.current_topic != current_topic:
+            state.current_topic = current_topic
+            state.topic_changes += 1
+            state.last_topic_change = datetime.now()
+            db.commit()
+    finally:
+        db.close()
+
 def reset_conversation(user_id: str):
     """Сбрасывает состояние диалога (для начала нового разговора)"""
     db = SessionLocal()

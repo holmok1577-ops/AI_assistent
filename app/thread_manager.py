@@ -1,5 +1,5 @@
 from openai import OpenAI
-from app.config import OPENAI_API_KEY, OPENAI_BASE_URL
+from app.config import CHAT_MODEL, OPENAI_API_KEY, OPENAI_BASE_URL
 from app.db import SessionLocal
 from app.models import UserThread
 from app.persona_instructions import ASSISTANT_INSTRUCTIONS
@@ -41,7 +41,7 @@ def get_or_create_assistant(mode: str = "chat", force_recreate: bool = False) ->
         assistant = client.beta.assistants.create(
             name=f"Светлана ({mode})",
             instructions=instructions,
-            model="gpt-4o-mini",
+            model=CHAT_MODEL,
             temperature=0.8
         )
         ASSISTANT_IDS[mode] = assistant.id

@@ -5,7 +5,7 @@ from app.sentiment import detect_tone
 
 logger = logging.getLogger(__name__)
 
-def adjust_emotions(user_id: str, message: str):
+def adjust_emotions(user_id: str, message: str, tone: str = None, affect_profile: dict | None = None):
     db = SessionLocal()
     emo = db.query(EmotionalState).filter_by(user_id=user_id).first()
 
@@ -15,22 +15,45 @@ def adjust_emotions(user_id: str, message: str):
         db.commit()
         db.refresh(emo)
 
-    tone = detect_tone(message)
+    tone = tone or detect_tone(message)
+    affect_profile = affect_profile or {}
 
     if tone == "friendly":
-        emo.joy += 5
+        emo.joy += 4
         emo.romantic += 2
         emo.calm += 3
+        emo.nervous -= 2
+
+    elif tone == "warm":
+        emo.joy += 7
+        emo.romantic += 4
+        emo.calm += 6
+        emo.nervous -= 4
+
+    elif tone == "playful":
+        emo.joy += 6
+        emo.calm += 3
+        emo.nervous -= 2
 
     elif tone == "angry":
-        emo.calm -= 15
+        emo.calm -= 8
+        emo.nervous += 10
+        emo.joy -= 6
+
+    elif tone == "profane":
+        emo.calm -= 16
         emo.nervous += 20
         emo.joy -= 10
 
-    elif tone == "profane":
-        emo.calm -= 25  # Усилено с 10 до 25
-        emo.nervous += 30  # Усилено с 15 до 30
-        emo.joy -= 15  # Усилено с 5 до 15
+    elif tone == "aggressive_profane":
+        emo.calm -= 26
+        emo.nervous += 32
+        emo.joy -= 16
+
+    elif tone == "insult":
+        emo.calm -= 18
+        emo.nervous += 24
+        emo.joy -= 12
 
     elif tone == "flirty":
         emo.romantic += 15
@@ -50,6 +73,42 @@ def adjust_emotions(user_id: str, message: str):
         emo.calm -= 2  # Небольшое снижение спокойствия
         emo.nervous += 3  # Небольшое повышение нервозности
         emo.joy -= 2
+
+    elif tone == "neutral":
+        # Естественный дрейф назад к базовому спокойному состоянию
+        if emo.nervous > 12:
+            emo.nervous -= 2
+        if emo.calm < 70:
+            emo.calm += 1
+        if emo.joy < 50:
+            emo.joy += 1
+
+    if affect_profile.get("hostile_recent", 0) >= 2:
+        emo.calm -= 4
+        emo.nervous += 6
+        emo.joy -= 3
+
+    if affect_profile.get("hostile_streak", 0) >= 3:
+        emo.calm -= 5
+        emo.nervous += 8
+
+    if affect_profile.get("positive_recent", 0) >= 2:
+        emo.calm += 3
+        emo.joy += 4
+        emo.nervous -= 2
+
+    if affect_profile.get("positive_streak", 0) >= 3:
+        emo.calm += 4
+        emo.joy += 5
+        emo.romantic += 2
+
+    if affect_profile.get("playful_recent", 0) >= 2:
+        emo.joy += 3
+        emo.calm += 2
+
+    if affect_profile.get("playful_streak", 0) >= 3:
+        emo.joy += 4
+        emo.romantic += 1
 
     # soft clamping
     for field in ["calm", "joy", "romantic", "nervous", "tired"]:
