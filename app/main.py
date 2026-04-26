@@ -11,7 +11,7 @@ from app.models import EmotionalState, RelationshipState
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from app.memory import remember_fact, get_user_facts
+from app.memory import extract_user_name, get_user_facts, get_user_name, remember_fact, save_user_name
 from app.long_memory import save_memory, search_memory
 from app.sentiment import detect_tone
 from app.thread_manager import get_or_create_thread, run_assistant_with_thread, get_or_create_assistant
@@ -165,9 +165,14 @@ def chat(req: ChatRequest):
 
         # 5. Память и остальные компоненты
         logger.info("Шаг 5: Работа с памятью...")
+        detected_name = extract_user_name(req.message)
+        if detected_name:
+            save_user_name(req.user_id, detected_name)
+            logger.info(f"Определено имя пользователя: {detected_name}")
         save_memory(req.user_id, req.message)
         memory_hits = search_memory(req.user_id, req.message)
         facts = get_user_facts(req.user_id)
+        user_name = get_user_name(req.user_id) or ""
         logger.info(f"Найдено {len(memory_hits)} воспоминаний, {len(facts)} фактов")
 
         logger.info("Шаг 6: Анализ динамики диалога...")
@@ -209,7 +214,8 @@ def chat(req: ChatRequest):
             introduced=conv_state.introduced,
             dialogue_guidance=dialogue_plan["guidance_text"],
             affect_guidance=affect_guidance,
-            affect_profile=affect_profile
+            affect_profile=affect_profile,
+            user_name=user_name
         )
 
         # 8. Генерация ответа через Thread API

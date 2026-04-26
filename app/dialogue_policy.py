@@ -136,6 +136,15 @@ def build_dialogue_guidance(
     assistant_question_streak = _count_trailing_questions(history)
     same_topic_streak = _same_topic_streak(current_topic, recent_user_messages)
     user_asked_question = "?" in (user_message or "")
+    text_lower = (user_message or "").lower()
+    direct_memory_check = any(
+        phrase in text_lower
+        for phrase in ["как меня зовут", "помнишь мое имя", "ты помнишь мое имя", "какое у меня имя"]
+    )
+    direct_fact_question = direct_memory_check or any(
+        phrase in text_lower
+        for phrase in ["помнишь", "кто я", "как зовут", "что я", "какое"]
+    )
 
     should_change_topic = (
         same_topic_streak >= 3 and user_depth in {"minimal", "brief"}
@@ -171,6 +180,8 @@ def build_dialogue_guidance(
 - По этой реплике: {follow_up_style}.
 - По теме: {topic_instruction}.
 - Если задаёшь вопрос, то только один.
+- Если пользователь задал новый прямой вопрос, не продолжай старый хвост разговора поверх ответа.
+- После короткого фактического ответа-проверки памяти обычно не нужен новый вопрос.
 - Если пользователь сам не раскрылся, не вытягивай из него детали насильно.
 - Иногда нормальная живая реакция вообще без вопроса.
 """.strip()
@@ -180,5 +191,7 @@ def build_dialogue_guidance(
         "user_depth": user_depth,
         "should_change_topic": should_change_topic,
         "user_asked_question": user_asked_question,
+        "direct_fact_question": direct_fact_question,
+        "direct_memory_check": direct_memory_check,
         "guidance_text": guidance_text,
     }

@@ -44,6 +44,19 @@ USER_GENDER_PATTERNS = [
     r"\bты был\b",
 ]
 
+AWKWARD_PATTERNS = [
+    r"как тебе тво[её] имя\??",
+    r"в чем именно ты хотел\(а\) помощи\??",
+    r"как тебе твое имя\??",
+]
+
+MEMORY_CHECK_PATTERNS = [
+    r"как меня зовут\??",
+    r"помнишь мое имя\??",
+    r"ты помнишь мое имя\??",
+    r"какое у меня имя\??",
+]
+
 
 def _normalize_question(text: str) -> str:
     text = (text or "").strip().lower()
@@ -87,8 +100,14 @@ def detect_reply_issues(reply: str, history: list, user_message: str) -> list[st
     if any(re.search(pattern, reply, flags=re.IGNORECASE) for pattern in USER_GENDER_PATTERNS):
         issues.append("assumed_user_gender")
 
+    if any(re.search(pattern, reply, flags=re.IGNORECASE) for pattern in AWKWARD_PATTERNS):
+        issues.append("awkward_phrase")
+
     if len(re.findall(r"[a-zA-Zа-яА-ЯёЁ0-9-]+", user_message or "")) <= 3 and len(current_questions) >= 1:
         issues.append("question_after_minimal_reply")
+
+    if any(re.search(pattern, user_message or "", flags=re.IGNORECASE) for pattern in MEMORY_CHECK_PATTERNS) and len(current_questions) >= 1:
+        issues.append("followup_after_memory_check")
 
     return issues
 

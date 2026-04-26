@@ -16,6 +16,7 @@ def inject_persona_context(
     dialogue_guidance="",
     affect_guidance="",
     affect_profile=None,
+    user_name="",
 ):
     # Выбор инструкции в зависимости от режима
     if mode == "secretary":
@@ -30,6 +31,10 @@ def inject_persona_context(
     facts_context = ""
     if facts:
         facts_context = "\n📌 ФАКТЫ О ПОЛЬЗОВАТЕЛЕ:\n" + "\n".join([f"- {f}" for f in facts[:3]])
+
+    known_user_context = ""
+    if user_name:
+        known_user_context = f"\n📌 ИМЯ ПОЛЬЗОВАТЕЛЯ: {user_name}"
     
     emotion_context = f"\n📌 ТЕКУЩЕЕ СОСТОЯНИЕ:\nСпокойствие: {emotions.get('calm', 50)}, Радость: {emotions.get('joy', 50)}, Романтика: {emotions.get('romantic', 20)}"
     
@@ -70,6 +75,7 @@ def inject_persona_context(
 
 {memory_context}
 {facts_context}
+{known_user_context}
 {emotion_context}
 {relationship_context}
 {mode_context}
@@ -86,4 +92,5 @@ def inject_persona_context(
 - Если пользователь спрашивает о тебе — отвечай конкретно, используя детали из биографии
 - Следи за родом: о себе только в женском, пользователя не гендерь без явного сигнала
 - Не превращай разговор в интервью
+- Если имя пользователя уже известно, не спрашивай и не обсуждай его без явной причины
 """
