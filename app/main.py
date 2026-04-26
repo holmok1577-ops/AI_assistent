@@ -19,7 +19,7 @@ from app.update_vector import update_vector_store
 from app.mode_manager import check_and_switch_mode
 from app.meeting_manager import create_meeting, get_user_meetings, delete_meeting
 from app.scheduler import start_scheduler, stop_scheduler
-from app.meeting_extractor import extract_meeting_from_reply
+from app.meeting_extractor import extract_meeting_from_reply, resolve_meeting_datetime
 
 from app.scoring import score_response
 from app.persona_manager import inject_persona_context
@@ -235,7 +235,7 @@ def chat(req: ChatRequest):
                     created_meeting = create_meeting(
                         req.user_id,
                         meeting_data['title'],
-                        meeting_data['datetime'],
+                        resolve_meeting_datetime(req.message, meeting_data['datetime']),
                         meeting_data.get('location', ''),
                         meeting_data.get('description', '')
                     )

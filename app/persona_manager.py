@@ -1,6 +1,7 @@
 from app.persona_instructions import ASSISTANT_INSTRUCTIONS
 from app.secretary_instructions import SECRETARY_INSTRUCTIONS
 from app.persona_states import get_persona_state
+from app.meeting_extractor import get_moscow_now
 
 def inject_persona_context(
     tone,
@@ -41,6 +42,8 @@ def inject_persona_context(
     relationship_context = f"\n📌 ОТНОШЕНИЯ:\nДоверие: {relationships.get('trust', 20)}, Близость: {relationships.get('closeness', 10)}"
     
     mode_context = f"\n📌 ТЕКУЩИЙ РЕЖИМ: {mode}"
+    if mode == "secretary":
+        mode_context += f"\n📌 ТЕКУЩЕЕ ВРЕМЯ МСК: {get_moscow_now().strftime('%Y-%m-%d %H:%M:%S')}"
     
     # Контекст диалога для режима чата
     conversation_context = ""
