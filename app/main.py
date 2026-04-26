@@ -30,6 +30,8 @@ from app.conversation_manager import get_conversation_state, increment_message_c
 from app.dialogue_policy import build_dialogue_guidance
 from app.response_guard import refine_reply
 from app.affect_memory import build_affect_guidance, record_and_get_affect_profile
+from app.conversation_journal import build_temporal_context, record_conversation_event
+from app.meeting_extractor import get_moscow_now
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -67,6 +69,8 @@ def chat(req: ChatRequest):
     logger.info(f"Сообщение: {req.message}")
 
     try:
+        now_msk = get_moscow_now()
+
         # 0. Проверка кодовой фразы для переключения режима
         logger.info("Шаг 0: Проверка режима...")
         current_mode, mode_switched = check_and_switch_mode(req.user_id, req.message)
@@ -173,6 +177,7 @@ def chat(req: ChatRequest):
         memory_hits = search_memory(req.user_id, req.message)
         facts = get_user_facts(req.user_id)
         user_name = get_user_name(req.user_id) or ""
+        temporal_context = build_temporal_context(req.user_id, req.message, now=now_msk)
         logger.info(f"Найдено {len(memory_hits)} воспоминаний, {len(facts)} фактов")
 
         logger.info("Шаг 6: Анализ динамики диалога...")
@@ -215,14 +220,17 @@ def chat(req: ChatRequest):
             dialogue_guidance=dialogue_plan["guidance_text"],
             affect_guidance=affect_guidance,
             affect_profile=affect_profile,
-            user_name=user_name
+            user_name=user_name,
+            temporal_context=temporal_context
         )
 
         # 8. Генерация ответа через Thread API
         logger.info("Шаг 8: Генерация ответа через Thread API...")
+        record_conversation_event(req.user_id, "user", req.message, now=now_msk)
         thread_id = get_or_create_thread(req.user_id)
         reply = run_assistant_with_thread(req.message, system_context, thread_id, mode=current_mode)
         reply = refine_reply(reply, req.message, req.history, mode=current_mode)
+        record_conversation_event(req.user_id, "ai", reply, now=get_moscow_now())
         logger.info(f"Ответ получен: {reply[:100]}...")
 
         # 8.5. Проверка на создание встречи (только в режиме секретаря)

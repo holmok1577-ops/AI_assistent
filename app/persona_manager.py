@@ -18,6 +18,7 @@ def inject_persona_context(
     affect_guidance="",
     affect_profile=None,
     user_name="",
+    temporal_context="",
 ):
     # Выбор инструкции в зависимости от режима
     if mode == "secretary":
@@ -75,6 +76,7 @@ def inject_persona_context(
 {persona_state_instruction}
 {dialogue_guidance}
 {affect_guidance}
+{temporal_context}
 
 {memory_context}
 {facts_context}
