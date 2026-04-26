@@ -62,9 +62,14 @@ def update_relationship(user_id: str, message: str, tone: str = None, affect_pro
         rel.sympathy += 2
 
     elif tone == "apologetic":
-        rel.sympathy += 15  # Быстрое восстановление симпатии
-        rel.trust += 10
-        rel.closeness += 5
+        if affect_profile.get("hostile_recent", 0) >= 2:
+            rel.sympathy += 6
+            rel.trust += 4
+            rel.closeness += 2
+        else:
+            rel.sympathy += 15  # Быстрое восстановление симпатии
+            rel.trust += 10
+            rel.closeness += 5
 
     elif tone == "robot_question":
         rel.sympathy -= 2  # Небольшое снижение симпатии

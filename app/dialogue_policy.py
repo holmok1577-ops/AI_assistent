@@ -137,6 +137,7 @@ def build_dialogue_guidance(
     same_topic_streak = _same_topic_streak(current_topic, recent_user_messages)
     user_asked_question = "?" in (user_message or "")
     text_lower = (user_message or "").lower()
+    recent_text = " ".join((item.get("text", "") or "").lower() for item in history[-8:])
     direct_memory_check = any(
         phrase in text_lower
         for phrase in ["как меня зовут", "помнишь мое имя", "ты помнишь мое имя", "какое у меня имя"]
@@ -144,6 +145,23 @@ def build_dialogue_guidance(
     direct_fact_question = direct_memory_check or any(
         phrase in text_lower
         for phrase in ["помнишь", "кто я", "как зовут", "что я", "какое"]
+    )
+    assistant_project_topic = any(
+        phrase in recent_text + " " + text_lower
+        for phrase in ["ассистент", "джарвис", "иишк", "ai", "ии", "помощник"]
+    )
+    user_pushback = any(
+        phrase in text_lower
+        for phrase in [
+            "что за вопросы",
+            "что опять",
+            "ты что ии",
+            "ты что ии",
+            "я не знаю",
+            "не знаю слова",
+            "не понял",
+            "не поняла",
+        ]
     )
 
     should_change_topic = (
@@ -170,6 +188,14 @@ def build_dialogue_guidance(
         else "текущую тему можно ещё немного поддержать"
     )
 
+    project_instruction = ""
+    if assistant_project_topic:
+        project_instruction = "- Если речь уже идёт про его ассистента, не спрашивай снова в лоб про функции, планы и общий функционал. Лучше реагируй конкретнее или смени угол.\n"
+
+    pushback_instruction = ""
+    if user_pushback:
+        pushback_instruction = "- Пользователь уже показал раздражение или непонимание. Упрости язык, убери допрос и не дави новым уточнением.\n"
+
     guidance_text = f"""
 📌 ДИНАМИКА ЭТОЙ РЕПЛИКИ:
 - Главная цель: {primary_goal}.
@@ -182,6 +208,7 @@ def build_dialogue_guidance(
 - Если задаёшь вопрос, то только один.
 - Если пользователь задал новый прямой вопрос, не продолжай старый хвост разговора поверх ответа.
 - После короткого фактического ответа-проверки памяти обычно не нужен новый вопрос.
+{project_instruction}{pushback_instruction}- Используй бытовые слова, без канцелярита и без умных терминов вроде "аспект", "вне разработки", "функционал".
 - Если пользователь сам не раскрылся, не вытягивай из него детали насильно.
 - Иногда нормальная живая реакция вообще без вопроса.
 """.strip()

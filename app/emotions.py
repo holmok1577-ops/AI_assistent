@@ -65,9 +65,14 @@ def adjust_emotions(user_id: str, message: str, tone: str = None, affect_profile
         emo.calm -= 4
 
     elif tone == "apologetic":
-        emo.calm += 20  # Быстрое восстановление спокойствия
-        emo.nervous -= 25  # Быстрое снижение нервозности
-        emo.joy += 5
+        if affect_profile.get("hostile_recent", 0) >= 2:
+            emo.calm += 10
+            emo.nervous -= 12
+            emo.joy += 2
+        else:
+            emo.calm += 20  # Быстрое восстановление спокойствия
+            emo.nervous -= 25  # Быстрое снижение нервозности
+            emo.joy += 5
 
     elif tone == "robot_question":
         emo.calm -= 2  # Небольшое снижение спокойствия

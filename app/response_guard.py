@@ -48,6 +48,10 @@ AWKWARD_PATTERNS = [
     r"как тебе тво[её] имя\??",
     r"в чем именно ты хотел\(а\) помощи\??",
     r"как тебе твое имя\??",
+    r"\bаспект\b",
+    r"\bвне разработки\b",
+    r"\bкакие функции тебе хочется добавить\b",
+    r"\bкакие функции планируешь добавить\b",
 ]
 
 MEMORY_CHECK_PATTERNS = [
@@ -55,6 +59,12 @@ MEMORY_CHECK_PATTERNS = [
     r"помнишь мое имя\??",
     r"ты помнишь мое имя\??",
     r"какое у меня имя\??",
+]
+
+UNSUPPORTED_CLAIM_PATTERNS = [
+    r"\bвыглядит впечатляюще\b",
+    r"\bпросто читала об этом\b",
+    r"\bя читала об этом\b",
 ]
 
 
@@ -102,6 +112,9 @@ def detect_reply_issues(reply: str, history: list, user_message: str) -> list[st
 
     if any(re.search(pattern, reply, flags=re.IGNORECASE) for pattern in AWKWARD_PATTERNS):
         issues.append("awkward_phrase")
+
+    if any(re.search(pattern, reply, flags=re.IGNORECASE) for pattern in UNSUPPORTED_CLAIM_PATTERNS):
+        issues.append("unsupported_claim")
 
     if len(re.findall(r"[a-zA-Zа-яА-ЯёЁ0-9-]+", user_message or "")) <= 3 and len(current_questions) >= 1:
         issues.append("question_after_minimal_reply")
